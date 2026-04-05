@@ -14,7 +14,7 @@ NC='\033[0m'
 show_menu() {
     clear
     echo -e "${CYAN}==========================================${NC}"
-    echo -e "${CYAN}    TELEMT KEY MANAGER v2.5 (STABLE)      ${NC}"
+    echo -e "${CYAN}    TELEMT KEY MANAGER v2.5 (MODIFIED)    ${NC}"
     echo -e "${CYAN}==========================================${NC}"
     echo -e "1. 🚀 Установить / Пересобрать прокси"
     echo -e "2. 🔑 Добавить новый ключ"
@@ -32,7 +32,7 @@ show_menu() {
         3) delete_key ;;
         4) set_ad_tag ;;
         5) show_links ;;
-        6) docker logs -f $CONTAINER_NAME --tail 50 ;;
+        6) docker logs --tail 50 $CONTAINER_NAME ; read -p "Нажмите Enter для возврата..." ;;
         7) uninstall_proxy ;;
         0) exit 0 ;;
         *) echo -e "${RED}Ошибка!${NC}"; sleep 1; show_menu ;;
@@ -46,7 +46,9 @@ generate_config() {
 
     cat > "$CONFIG_FILE" << EOT
 [general]
-use_middle_proxy = false
+use_middle_proxy = true
+prefer_ipv6 = false
+fast_mode = true
 $TAG_LINE
 
 [general.modes]
@@ -160,7 +162,17 @@ show_links() {
 }
 
 uninstall_proxy() {
-    docker rm -f $CONTAINER_NAME; rm -rf "$CONFIG_DIR"; echo "Удалено"; sleep 1
+    echo -e "${RED}ВНИМАНИЕ! Вы собираетесь полностью удалить прокси и все ключи!${NC}"
+    read -p "Вы уверены? (y/n): " confirm
+    if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
+        echo -e "${GREEN}Удаление отменено.${NC}"
+        sleep 2
+        return
+    fi
+    docker rm -f $CONTAINER_NAME 2>/dev/null
+    rm -rf "$CONFIG_DIR"
+    echo -e "${RED}Прокси и все данные удалены.${NC}"
+    sleep 2
 }
 
 while true; do show_menu; done
